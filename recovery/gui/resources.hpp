@@ -38,6 +38,14 @@ typedef enum {
 class FontResource : public Resource
 {
 public:
+	enum Type
+	{
+		TYPE_TWRP,
+#ifndef TW_DISABLE_TTF
+		TYPE_TTF,
+#endif
+	};
+
 	FontResource(xml_node<>* node, ZipArchive* pZip);
 	virtual ~FontResource();
 
@@ -46,6 +54,7 @@ public:
 
 protected:
 	void* mFont;
+	Type m_type;
 };
 
 class ImageResource : public Resource
@@ -81,6 +90,7 @@ class ResourceManager
 public:
 	ResourceManager(xml_node<>* resList, ZipArchive* pZip);
 	virtual ~ResourceManager();
+	void LoadResources(xml_node<>* resList, ZipArchive* pZip);
 
 public:
 	Resource* FindResource(std::string name);

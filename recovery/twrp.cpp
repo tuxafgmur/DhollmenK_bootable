@@ -1,6 +1,4 @@
 /*
-
-ccdd
 		TWRP is free software: you can redistribute it and/or modify
 		it under the terms of the GNU General Public License as published by
 		the Free Software Foundation, either version 3 of the License, or
@@ -53,6 +51,7 @@ struct selabel_handle *selinux_handle;
 
 TWPartitionManager PartitionManager;
 int Log_Offset;
+bool datamedia;
 twrpDU du;
 
 static void Print_Prop(const char *key, const char *name, void *cookie) {
@@ -78,12 +77,18 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
+#ifdef RECOVERY_SDCARD_ON_DATA
+	datamedia = true;
+#endif
+
 	char crash_prop_val[PROPERTY_VALUE_MAX];
 	int crash_counter;
 	property_get("twrp.crash_counter", crash_prop_val, "-1");
 	crash_counter = atoi(crash_prop_val) + 1;
 	snprintf(crash_prop_val, sizeof(crash_prop_val), "%d", crash_counter);
 	property_set("twrp.crash_counter", crash_prop_val);
+	property_set("ro.twrp.boot", "1");
+	property_set("ro.twrp.version", TW_VERSION_STR);
 
 	time_t StartupTime = time(NULL);
 	printf("Starting TWRP %s on %s", TW_VERSION_STR, ctime(&StartupTime));
@@ -270,6 +275,13 @@ int main(int argc, char **argv) {
 	}
 
 	// Read the settings file
+#ifdef TW_HAS_MTP
+	// We unmount partitions sometimes during early boot which may override
+	// the default of MTP being enabled by auto toggling MTP off. This
+	// will force it back to enabled then get overridden by the settings
+	// file, assuming that an entry for tw_mtp_enabled is set.
+	DataManager::SetValue("tw_mtp_enabled", 1);
+#endif
 	DataManager::ReadSettingsFile();
 
 	// Fixup the RTC clock on devices which require it
@@ -281,13 +293,41 @@ int main(int argc, char **argv) {
 		OpenRecoveryScript::Run_OpenRecoveryScript();
 	}
 
+#ifdef TW_HAS_MTP
+	// Enable MTP?
+	char mtp_crash_check[PROPERTY_VALUE_MAX];
+	property_get("mtp.crash_check", mtp_crash_check, "0");
+	if (strcmp(mtp_crash_check, "0") == 0) {
+		property_set("mtp.crash_check", "1");
+		if (DataManager::GetIntValue(TW_IS_ENCRYPTED) != 0) {
+			if (DataManager::GetIntValue(TW_IS_DECRYPTED) != 0 && DataManager::GetIntValue("tw_mtp_enabled") == 1) {
+				LOGINFO("Enabling MTP during startup\n");
+				if (!PartitionManager.Enable_MTP())
+					PartitionManager.Disable_MTP();
+				else
+					gui_print("MTP Enabled\n");
+			}
+		} else if (DataManager::GetIntValue("tw_mtp_enabled") == 1) {
+			LOGINFO("Enabling MTP during startup\n");
+			if (!PartitionManager.Enable_MTP())
+				PartitionManager.Disable_MTP();
+			else
+				gui_print("MTP Enabled\n");
+		}
+		property_set("mtp.crash_check", "0");
+	} else {
+		gui_print_color("warning", "MTP Crashed, not starting MTP on boot.\n");
+		DataManager::SetValue("tw_mtp_enabled", 0);
+	}
+#endif
+
 	// Launch the main GUI
 	gui_start();
 
 	// Check for su to see if the device is rooted or not
 	if (PartitionManager.Mount_By_Path("/system", false)) {
 		// Disable flashing of stock recovery
-		if (TWFunc::Path_Exists("/system/recovery-from-boot.p")) {
+		if (TWFunc::Path_Exists("/system/recovery-from-boot.p") && TWFunc::Path_Exists("/system/etc/install-recovery.sh")) {
 			rename("/system/recovery-from-boot.p", "/system/recovery-from-boot.bak");
 			gui_print("Renamed stock recovery file in /system to prevent\nthe stock ROM from replacing TWRP.\n");
 		}

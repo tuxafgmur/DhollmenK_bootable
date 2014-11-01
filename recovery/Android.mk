@@ -14,6 +14,18 @@
 
 LOCAL_PATH := $(call my-dir)
 
+ifdef project-path-for
+    ifeq ($(LOCAL_PATH),$(call project-path-for,recovery))
+        PROJECT_PATH_AGREES := true
+    endif
+else
+    ifeq ($(LOCAL_PATH),bootable/recovery)
+        PROJECT_PATH_AGREES := true
+    endif
+endif
+
+ifeq ($(PROJECT_PATH_AGREES),true)
+
 include $(CLEAR_VARS)
 
 TARGET_RECOVERY_GUI := true
@@ -73,7 +85,8 @@ LOCAL_STATIC_LIBRARIES :=
 LOCAL_SHARED_LIBRARIES :=
 
 LOCAL_STATIC_LIBRARIES += libcrecovery libguitwrp
-LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery
+LOCAL_SHARED_LIBRARIES += libz libc libstlport libcutils libstdc++ libtar libblkid libminuitwrp libminadbd libmtdutils libminzip libaosprecovery libcorkscrew
+LOCAL_SHARED_LIBRARIES += libgccdemangle
 
 ifneq ($(wildcard system/core/libsparse/Android.mk),)
 LOCAL_SHARED_LIBRARIES += libsparse
@@ -84,6 +97,7 @@ ifeq ($(TW_OEM_BUILD),true)
     BOARD_HAS_NO_REAL_SDCARD := true
     TW_USE_TOOLBOX := true
     TW_EXCLUDE_SUPERSU := true
+    TW_EXCLUDE_MTP := true
 endif
 ifeq ($(TARGET_USERIMAGES_USE_EXT4), true)
     LOCAL_CFLAGS += -DUSE_EXT4
@@ -124,6 +138,10 @@ LOCAL_MODULE_TAGS := eng
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
 #TWRP Build Flags
+ifeq ($(TW_EXCLUDE_MTP),)
+    LOCAL_SHARED_LIBRARIES += libtwrpmtp
+    LOCAL_CFLAGS += -DTW_HAS_MTP
+endif
 ifneq ($(TW_NO_SCREEN_TIMEOUT),)
     LOCAL_CFLAGS += -DTW_NO_SCREEN_TIMEOUT
 endif
@@ -180,6 +198,9 @@ ifeq ($(TW_NO_REBOOT_RECOVERY), true)
 endif
 ifeq ($(TW_NO_BATT_PERCENT), true)
     LOCAL_CFLAGS += -DTW_NO_BATT_PERCENT
+endif
+ifeq ($(TW_NO_CPU_TEMP), true)
+    LOCAL_CFLAGS += -DTW_NO_CPU_TEMP
 endif
 ifneq ($(TW_CUSTOM_POWER_BUTTON),)
 	LOCAL_CFLAGS += -DTW_CUSTOM_POWER_BUTTON=$(TW_CUSTOM_POWER_BUTTON)
@@ -261,11 +282,20 @@ endif
 ifneq ($(TW_BRIGHTNESS_PATH),)
 	LOCAL_CFLAGS += -DTW_BRIGHTNESS_PATH=$(TW_BRIGHTNESS_PATH)
 endif
+ifneq ($(TW_SECONDARY_BRIGHTNESS_PATH),)
+	LOCAL_CFLAGS += -DTW_SECONDARY_BRIGHTNESS_PATH=$(TW_SECONDARY_BRIGHTNESS_PATH)
+endif
 ifneq ($(TW_MAX_BRIGHTNESS),)
 	LOCAL_CFLAGS += -DTW_MAX_BRIGHTNESS=$(TW_MAX_BRIGHTNESS)
 endif
 ifneq ($(TW_CUSTOM_BATTERY_PATH),)
 	LOCAL_CFLAGS += -DTW_CUSTOM_BATTERY_PATH=$(TW_CUSTOM_BATTERY_PATH)
+endif
+ifneq ($(TW_CUSTOM_CPU_TEMP_PATH),)
+	LOCAL_CFLAGS += -DTW_CUSTOM_CPU_TEMP_PATH=$(TW_CUSTOM_CPU_TEMP_PATH)
+endif
+ifneq ($(TW_NO_CPU_TEMP),)
+	LOCAL_CFLAGS += -DTW_NO_CPU_TEMP=$(TW_NO_CPU_TEMP)
 endif
 ifneq ($(TW_EXCLUDE_ENCRYPTED_BACKUPS), true)
     LOCAL_SHARED_LIBRARIES += libopenaes
@@ -293,11 +323,17 @@ include $(CLEAR_VARS)
 # Create busybox symlinks... gzip and gunzip are excluded because those need to link to pigz instead
 BUSYBOX_LINKS := $(shell cat external/busybox/busybox-full.links)
 exclude := tune2fs mke2fs mkdosfs gzip gunzip
+
+# If busybox does not have restorecon, assume it does not have SELinux support.
+# Then, let toolbox provide 'ls' so -Z is available to list SELinux contexts.
 ifeq ($(TWHAVE_SELINUX), true)
-	exclude += ls
-	# toolbox will provide ls support with ls -Z capability for listing SELinux contexts
+	ifeq ($(filter restorecon, $(notdir $(BUSYBOX_LINKS))),)
+		exclude += ls
+	endif
 endif
-RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/,$(filter-out $(exclude),$(notdir $(BUSYBOX_LINKS))))
+
+RECOVERY_BUSYBOX_TOOLS := $(filter-out $(exclude), $(notdir $(BUSYBOX_LINKS)))
+RECOVERY_BUSYBOX_SYMLINKS := $(addprefix $(TARGET_RECOVERY_ROOT_OUT)/sbin/, $(RECOVERY_BUSYBOX_TOOLS))
 $(RECOVERY_BUSYBOX_SYMLINKS): BUSYBOX_BINARY := busybox
 $(RECOVERY_BUSYBOX_SYMLINKS): $(LOCAL_INSTALLED_MODULE)
 	@echo "Symlink: $@ -> $(BUSYBOX_BINARY)"
@@ -312,7 +348,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := verifier_test
 LOCAL_FORCE_STATIC_EXECUTABLE := true
 LOCAL_MODULE_TAGS := tests
-LOCAL_C_INCLUDES := bootable/recovery/libmincrypt/includes
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
 LOCAL_SRC_FILES := \
     verifier_test.cpp \
     verifier.cpp \
@@ -330,7 +366,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaosprecovery
 LOCAL_MODULE_TAGS := eng
 LOCAL_MODULES_TAGS = optional
-LOCAL_C_INCLUDES := bootable/recovery/libmincrypt/includes
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/libmincrypt/includes
 LOCAL_SRC_FILES = adb_install.cpp bootloader.cpp verifier.cpp mtdutils/mtdutils.c legacy_property_service.c
 LOCAL_SHARED_LIBRARIES += libc liblog libcutils libmtdutils
 LOCAL_STATIC_LIBRARIES += libmincrypttwrp
@@ -370,7 +406,8 @@ include $(commands_recovery_local_path)/injecttwrp/Android.mk \
     $(commands_recovery_local_path)/openaes/Android.mk \
     $(commands_recovery_local_path)/toolbox/Android.mk \
     $(commands_recovery_local_path)/libmincrypt/Android.mk \
-    $(commands_recovery_local_path)/twrpTarMain/Android.mk
+    $(commands_recovery_local_path)/twrpTarMain/Android.mk \
+    $(commands_recovery_local_path)/mtp/Android.mk
 
 ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
     include $(commands_recovery_local_path)/crypto/libcrypt_samsung/Android.mk
@@ -392,13 +429,18 @@ ifeq ($(BUILD_ID), GINGERBREAD)
     TW_NO_EXFAT := true
 endif
 ifneq ($(TW_NO_EXFAT), true)
-    include $(commands_recovery_local_path)/exfat/exfat-fuse/Android.mk \
-            $(commands_recovery_local_path)/exfat/mkfs/Android.mk \
+    include $(commands_recovery_local_path)/exfat/mkfs/Android.mk \
             $(commands_recovery_local_path)/fuse/Android.mk \
             $(commands_recovery_local_path)/exfat/libexfat/Android.mk
 endif
+ifneq ($(TW_NO_EXFAT_FUSE), true)
+    include $(commands_recovery_local_path)/exfat/exfat-fuse/Android.mk
+endif
 ifeq ($(TW_INCLUDE_CRYPTO), true)
     include $(commands_recovery_local_path)/crypto/ics/Android.mk
+endif
+ifneq ($(TW_OEM_BUILD),true)
+    include $(commands_recovery_local_path)/orscmd/Android.mk
 endif
 
 # FB2PNG
@@ -407,3 +449,5 @@ ifeq ($(TW_INCLUDE_FB2PNG), true)
 endif
 
 commands_recovery_local_path :=
+
+endif
