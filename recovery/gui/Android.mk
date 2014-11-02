@@ -106,6 +106,7 @@ ifeq ($(TW_CUSTOM_THEME),)
 	else ifneq ($(filter $(DEVICE_RESOLUTION), $(WATCH)),)
 		TWRP_COMMON_XML := cp -fr $(commands_recovery_local_path)/gui/devices/watch/res/* $(TARGET_RECOVERY_ROOT_OUT)/res/
 	endif
+
 else
 	TWRP_THEME_LOC := $(TW_CUSTOM_THEME)
 endif
@@ -127,13 +128,13 @@ $(TWRP_RES_GEN):
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/res/
 	cp -fr $(TWRP_RES_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)/res/
 	cp -fr $(TWRP_THEME_LOC)/* $(TARGET_RECOVERY_ROOT_OUT)/res/
+	cp -fr $(RECOVERY_PACKAGE_OVERLAYS)/bootable/recovery/gui/devices/$(DEVICE_RESOLUTION)/res/images/* $(TARGET_RECOVERY_ROOT_OUT)/res/images/
 	$(TWRP_COMMON_XML)
 	$(TWRP_REMOVE_FONT)
 	mkdir -p $(TARGET_RECOVERY_ROOT_OUT)/sbin/
 	ln -sf $(TWRP_SH_TARGET) $(TARGET_RECOVERY_ROOT_OUT)/sbin/sh
 	ln -sf /sbin/pigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/gzip
 	ln -sf /sbin/unpigz $(TARGET_RECOVERY_ROOT_OUT)/sbin/gunzip
-
 
 LOCAL_GENERATED_SOURCES := $(TWRP_RES_GEN)
 LOCAL_SRC_FILES := twrp $(TWRP_RES_GEN)

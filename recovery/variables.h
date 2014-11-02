@@ -17,16 +17,16 @@
 #ifndef _VARIABLES_HEADER_
 #define _VARIABLES_HEADER_
 
-#define TW_VERSION_STR              "2.8.1.0"
+#define TW_VERSION_STR              "2.8.1.5"
 
 #define TW_USE_COMPRESSION_VAR      "tw_use_compression"
 #define TW_FILENAME                 "tw_filename"
 #define TW_ZIP_INDEX                "tw_zip_index"
-#define TW_ZIP_QUEUE_COUNT       "tw_zip_queue_count"
+#define TW_ZIP_QUEUE_COUNT          "tw_zip_queue_count"
 
 #define MAX_BACKUP_NAME_LEN 64
 #define TW_BACKUP_TEXT              "tw_backup_text"
-#define TW_BACKUP_NAME		        "tw_backup_name"
+#define TW_BACKUP_NAME		    "tw_backup_name"
 #define TW_BACKUP_SYSTEM_VAR        "tw_backup_system"
 #define TW_BACKUP_DATA_VAR          "tw_backup_data"
 #define TW_BACKUP_BOOT_VAR          "tw_backup_boot"
@@ -39,7 +39,7 @@
 #define TW_BACKUP_SP3_VAR           "tw_backup_sp3"
 #define TW_BACKUP_AVG_IMG_RATE      "tw_backup_avg_img_rate"
 #define TW_BACKUP_AVG_FILE_RATE     "tw_backup_avg_file_rate"
-#define TW_BACKUP_AVG_FILE_COMP_RATE    "tw_backup_avg_file_comp_rate"
+#define TW_BACKUP_AVG_FILE_COMP_RATE "tw_backup_avg_file_comp_rate"
 #define TW_BACKUP_SYSTEM_SIZE       "tw_backup_system_size"
 #define TW_BACKUP_DATA_SIZE         "tw_backup_data_size"
 #define TW_BACKUP_BOOT_SIZE         "tw_backup_boot_size"
@@ -66,7 +66,7 @@
 #define TW_RESTORE_SP3_VAR          "tw_restore_sp3"
 #define TW_RESTORE_AVG_IMG_RATE     "tw_restore_avg_img_rate"
 #define TW_RESTORE_AVG_FILE_RATE    "tw_restore_avg_file_rate"
-#define TW_RESTORE_AVG_FILE_COMP_RATE    "tw_restore_avg_file_comp_rate"
+#define TW_RESTORE_AVG_FILE_COMP_RATE "tw_restore_avg_file_comp_rate"
 #define TW_RESTORE_FILE_DATE        "tw_restore_file_date"
 #define TW_VERIFY_MD5_TEXT          "tw_verify_md5_text"
 #define TW_UPDATE_SYSTEM_DETAILS_TEXT "tw_update_system_details_text"
@@ -134,35 +134,22 @@
 #define TW_SIMULATE_ACTIONS         "tw_simulate_actions"
 #define TW_SIMULATE_FAIL            "tw_simulate_fail"
 #define TW_DONT_UNMOUNT_SYSTEM      "tw_dont_unmount_system"
-// #define TW_ALWAYS_RMRF              "tw_always_rmrf"
 
 #define TW_SHOW_DUMLOCK             "tw_show_dumlock"
 #define TW_HAS_INJECTTWRP           "tw_has_injecttwrp"
 #define TW_INJECT_AFTER_ZIP         "tw_inject_after_zip"
 #define TW_HAS_DATADATA             "tw_has_datadata"
 #define TW_FLASH_ZIP_IN_PLACE       "tw_flash_zip_in_place"
-#define TW_MIN_SYSTEM_SIZE          "50" // minimum system size to allow a reboot
+#define TW_MIN_SYSTEM_SIZE          "50" 			// minimum system size to allow a reboot
 #define TW_MIN_SYSTEM_VAR           "tw_min_system"
 #define TW_DOWNLOAD_MODE            "tw_download_mode"
 #define TW_IS_ENCRYPTED             "tw_is_encrypted"
 #define TW_IS_DECRYPTED             "tw_is_decrypted"
 #define TW_HAS_CRYPTO               "tw_has_crypto"
 #define TW_CRYPTO_PASSWORD          "tw_crypto_password"
-#define TW_DATA_BLK_DEVICE          "tw_data_blk_device"  // Original block device - not decrypted
+#define TW_DATA_BLK_DEVICE          "tw_data_blk_device"  	// Original block device - not decrypted
 #define TW_SDEXT_DISABLE_EXT4       "tw_sdext_disable_ext4"
 #define TW_MILITARY_TIME            "tw_military_time"
-
-// Also used:
-//   tw_boot_is_mountable
-//   tw_system_is_mountable
-//   tw_data_is_mountable
-//   tw_cache_is_mountable
-//   tw_sdcext_is_mountable
-//   tw_sdcint_is_mountable
-//   tw_sd-ext_is_mountable
-//   tw_sp1_is_mountable
-//   tw_sp2_is_mountable
-//   tw_sp3_is_mountable
 
 // Max archive size for tar backups before we split (1.5GB)
 #define MAX_ARCHIVE_SIZE 1610612736LLU

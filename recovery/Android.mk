@@ -54,30 +54,9 @@ endif
 
 LOCAL_MODULE := recovery
 
-#LOCAL_FORCE_STATIC_EXECUTABLE := true
-
 RECOVERY_API_VERSION := 3
 RECOVERY_FSTAB_VERSION := 2
 LOCAL_CFLAGS += -DRECOVERY_API_VERSION=$(RECOVERY_API_VERSION)
-
-#LOCAL_STATIC_LIBRARIES := \
-#    libext4_utils_static \
-#    libsparse_static \
-#    libminzip \
-#    libz \
-#    libmtdutils \
-#    libmincrypt \
-#    libminadbd \
-#    libminui \
-#    libpixelflinger_static \
-#    libpng \
-#    libfs_mgr \
-#    libcutils \
-#    liblog \
-#    libselinux \
-#    libstdc++ \
-#    libm \
-#    libc
 
 LOCAL_C_INCLUDES += bionic external/stlport/stlport
 
@@ -129,11 +108,7 @@ endif
 # TODO: Build the ramdisk image in a more principled way.
 LOCAL_MODULE_TAGS := eng
 
-#ifeq ($(TARGET_RECOVERY_UI_LIB),)
-  LOCAL_SRC_FILES += default_device.cpp
-#else
-#  LOCAL_STATIC_LIBRARIES += $(TARGET_RECOVERY_UI_LIB)
-#endif
+LOCAL_SRC_FILES += default_device.cpp
 
 LOCAL_C_INCLUDES += system/extras/ext4_utils
 
@@ -229,9 +204,7 @@ endif
 ifneq ($(BOARD_UMS_LUNFILE),)
     LOCAL_CFLAGS += -DCUSTOM_LUN_FILE=\"$(BOARD_UMS_LUNFILE)\"
 endif
-#ifeq ($(TW_FLASH_FROM_STORAGE), true) Making this the default behavior
-    LOCAL_CFLAGS += -DTW_FLASH_FROM_STORAGE
-#endif
+LOCAL_CFLAGS += -DTW_FLASH_FROM_STORAGE
 ifeq ($(TW_HAS_DOWNLOAD_MODE), true)
     LOCAL_CFLAGS += -DTW_HAS_DOWNLOAD_MODE
 endif
@@ -261,20 +234,15 @@ ifeq ($(TW_INCLUDE_CRYPTO_SAMSUNG), true)
         LOCAL_CFLAGS += -DCRYPTO_SD_REAL_BLKDEV=\"$(TW_CRYPTO_SD_REAL_BLKDEV)\"
         LOCAL_CFLAGS += -DCRYPTO_SD_FS_TYPE=\"$(TW_CRYPTO_SD_FS_TYPE)\"
     endif
-    #LOCAL_LDFLAGS += -L$(TARGET_OUT_SHARED_LIBRARIES) -lsec_km
     LOCAL_LDFLAGS += -ldl
     LOCAL_STATIC_LIBRARIES += libcrypt_samsung
 endif
     LOCAL_SHARED_LIBRARIES += libcryptfsics
-    #LOCAL_SRC_FILES += crypto/ics/cryptfs.c
-    #LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include
 endif
 ifeq ($(TW_INCLUDE_JB_CRYPTO), true)
     LOCAL_CFLAGS += -DTW_INCLUDE_CRYPTO
     LOCAL_CFLAGS += -DTW_INCLUDE_JB_CRYPTO
     LOCAL_SHARED_LIBRARIES += libcryptfsjb
-    #LOCAL_SRC_FILES += crypto/jb/cryptfs.c
-    #LOCAL_C_INCLUDES += system/extras/ext4_utils external/openssl/include
 endif
 ifeq ($(TW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID), true)
     LOCAL_CFLAGS += -DTW_USE_MODEL_HARDWARE_ID_FOR_DEVICE_ID
